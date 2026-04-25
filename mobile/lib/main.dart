@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'constants/app_colors.dart';
+import 'providers/auth_provider.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
+import 'screens/home/home_screen.dart';
+import 'screens/prestataire/add_service_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'screens/reservation/reservation_screen.dart';
+import 'screens/services/prestataire_detail_screen.dart';
+import 'screens/services/prestataires_screen.dart';
+import 'services/api_service.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final api = ApiService(prefs);
+  final auth = AuthProvider(api, prefs);
+  await auth.init();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<ApiService>.value(value: api),
+        ChangeNotifierProvider<AuthProvider>.value(value: auth),
+      ],
+      child: const ServiDomApp(),
+    ),
+  );
+}
+
+class ServiDomApp extends StatelessWidget {
+  const ServiDomApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      primary: AppColors.primary,
+      secondary: AppColors.secondary,
+      surface: AppColors.surface,
+      brightness: Brightness.light,
+    );
+
+    return MaterialApp(
+      title: 'ServiDom',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: AppColors.background,
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
+          elevation: 0,
+          scrolledUnderElevation: 0.5,
+          centerTitle: false,
+          titleTextStyle: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.surface,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          color: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          clipBehavior: Clip.antiAlias,
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+          labelTextStyle: WidgetStateProperty.resolveWith((s) {
+            if (s.contains(WidgetState.selected)) {
+              return const TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary);
+            }
+            return const TextStyle(color: AppColors.textSecondary);
+          }),
+        ),
+      ),
+      initialRoute: HomeScreen.routeName,
+      routes: {
+        HomeScreen.routeName: (_) => const HomeScreen(),
+        LoginScreen.routeName: (_) => const LoginScreen(),
+        RegisterScreen.routeName: (_) => const RegisterScreen(),
+        ProfileScreen.routeName: (_) => const ProfileScreen(),
+        AddServiceScreen.routeName: (_) => const AddServiceScreen(),
+      },
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case PrestatairesScreen.routeName:
+            final args = settings.arguments as PrestatairesArgs;
+            return MaterialPageRoute<void>(
+              builder: (_) => PrestatairesScreen(
+                category: args.category,
+                quartierFilter: args.quartierFilter,
+              ),
+              settings: settings,
+            );
+          case PrestataireDetailScreen.routeName:
+            final args = settings.arguments as PrestataireDetailArgs;
+            return MaterialPageRoute<void>(
+              builder: (_) => PrestataireDetailScreen(
+                prestataireId: args.prestataireId,
+                initialServiceId: args.initialServiceId,
+              ),
+              settings: settings,
+            );
+          case ReservationScreen.routeName:
+            final args = settings.arguments as ReservationArgs;
+            return MaterialPageRoute<void>(
+              builder: (_) => ReservationScreen(
+                prestataireId: args.prestataireId,
+                serviceId: args.serviceId,
+                prestataireNom: args.prestataireNom,
+                serviceTitre: args.serviceTitre,
+                tarifHoraire: args.tarifHoraire,
+              ),
+              settings: settings,
+            );
+        }
+        return null;
+      },
+    );
+  }
+}

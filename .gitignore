@@ -1,0 +1,8 @@
+backend/node_modules/
+backend/.env
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+mobile/.idea/ 
+mobile/.vscode/ 
+
