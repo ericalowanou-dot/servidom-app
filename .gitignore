@@ -5,4 +5,5 @@ mobile/build/
 mobile/.flutter-plugins*
 mobile/.idea/ 
 mobile/.vscode/ 
-
+.idea/
+*.docx
