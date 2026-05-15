@@ -5,6 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../models/service_model.dart';
 import '../../services/api_service.dart';
 import '../../utils/category_icons.dart';
+import '../../widgets/verified_badge.dart';
 import 'prestataire_detail_screen.dart';
 
 class PrestatairesArgs {
@@ -27,6 +28,7 @@ class PrestatairesScreen extends StatefulWidget {
 
 class _PrestatairesScreenState extends State<PrestatairesScreen> {
   late Future<List<PrestataireListItem>> _future;
+  bool _verifieOnly = false;
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> {
     _future = context.read<ApiService>().getPrestataires(
           widget.category.id,
           quartier: widget.quartierFilter,
+          verifieOnly: _verifieOnly,
         );
   }
 
@@ -65,7 +68,25 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> {
               )
             : null,
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          Material(
+            color: AppColors.surface,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: FilterChip(
+                label: const Text('Prestataires vérifiés uniquement'),
+                avatar: const Icon(Icons.verified_rounded, size: 18),
+                selected: _verifieOnly,
+                onSelected: (v) => setState(() {
+                  _verifieOnly = v;
+                  _load();
+                }),
+              ),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: () async {
           setState(_load);
@@ -95,14 +116,16 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> {
             if (list.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 120),
-                  Icon(Icons.person_search_rounded, size: 56, color: AppColors.textSecondary),
-                  SizedBox(height: 16),
+                children: [
+                  const SizedBox(height: 120),
+                  const Icon(Icons.person_search_rounded, size: 56, color: AppColors.textSecondary),
+                  const SizedBox(height: 16),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(
-                      'Aucun prestataire pour cette catégorie pour le moment.',
+                      _verifieOnly
+                          ? 'Aucun prestataire vérifié pour cette recherche.'
+                          : 'Aucun prestataire pour cette catégorie pour le moment.',
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -133,6 +156,9 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> {
             );
           },
         ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -200,8 +226,7 @@ class _PrestataireCard extends StatelessWidget {
                             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
-                        if (item.estVerifie == true)
-                          const Icon(Icons.verified_rounded, color: AppColors.primary, size: 20),
+                        if (item.estVerifie == true) const VerifiedBadge(compact: true),
                       ],
                     ),
                     const SizedBox(height: 4),

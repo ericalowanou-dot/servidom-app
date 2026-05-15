@@ -95,6 +95,8 @@ const createTables = async () => {
         montant_total DECIMAL(10, 2),
         statut_paiement VARCHAR(20) DEFAULT 'non_paye'
           CHECK (statut_paiement IN ('non_paye', 'paye', 'rembourse')),
+        reference_paiement VARCHAR(80),
+        mode_paiement VARCHAR(40),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );

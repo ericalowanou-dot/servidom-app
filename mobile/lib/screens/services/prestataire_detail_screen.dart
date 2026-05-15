@@ -6,6 +6,7 @@ import '../../models/service_model.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../widgets/verified_badge.dart';
 import '../auth/login_screen.dart';
 import '../reservation/reservation_screen.dart';
 
@@ -192,11 +193,7 @@ class _PrestataireDetailScreenState extends State<PrestataireDetailScreen> {
                           if (p.nombreAvis != null && p.nombreAvis! > 0)
                             Text(' · ${p.nombreAvis} avis', style: theme.textTheme.bodySmall),
                           const Spacer(),
-                          if (p.estVerifie == true)
-                            Chip(
-                              avatar: const Icon(Icons.verified_rounded, size: 18, color: AppColors.primary),
-                              label: const Text('Vérifié'),
-                            ),
+                          if (p.estVerifie == true) const VerifiedBadge(),
                         ],
                       ),
                       const SizedBox(height: 8),

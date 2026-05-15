@@ -18,6 +18,7 @@ import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/messages/chat_screen.dart';
 import 'screens/messages/conversations_screen.dart';
+import 'screens/reservation/payment_simulation_screen.dart';
 import 'screens/reservation/reservation_detail_screen.dart';
 import 'screens/reservation/reservation_screen.dart';
 import 'models/service_model.dart';
@@ -129,6 +130,12 @@ class ServiDomApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {
+          case PaymentSimulationScreen.routeName:
+            final args = settings.arguments as PaymentSimulationArgs;
+            return MaterialPageRoute<void>(
+              builder: (_) => PaymentSimulationScreen(reservation: args.reservation),
+              settings: settings,
+            );
           case ChatScreen.routeName:
             final args = settings.arguments as ChatArgs;
             return MaterialPageRoute<void>(

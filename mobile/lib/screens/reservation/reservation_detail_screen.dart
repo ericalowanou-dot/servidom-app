@@ -7,6 +7,7 @@ import '../../models/reservation_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../messages/chat_screen.dart';
+import 'payment_simulation_screen.dart';
 
 class ReservationDetailArgs {
   const ReservationDetailArgs({required this.reservation});
@@ -226,17 +227,52 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           const SizedBox(height: 16),
           Text('Paiement', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final p in ['non_paye', 'paye', 'rembourse'])
-                ChoiceChip(
-                  label: Text(p == 'non_paye' ? 'Non payé' : p == 'paye' ? 'Payé' : 'Remboursé'),
-                  selected: _r.statutPaiement == p || (_r.statutPaiement == null && p == 'non_paye'),
-                  onSelected: _busy ? null : (_) => _changePaiement(p),
+          if (_r.estPaye) ...[
+            Card(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Text('Payé', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    if (_r.modePaiement != null && _r.modePaiement!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text('Via ${_r.modePaiementLabel}'),
+                      ),
+                    if (_r.referencePaiement != null && _r.referencePaiement!.isNotEmpty)
+                      Text('Réf. ${_r.referencePaiement}', style: theme.textTheme.bodySmall),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            ),
+          ] else if (role == 'client' && _r.statut != 'annule') ...[
+            FilledButton.icon(
+              onPressed: _busy
+                  ? null
+                  : () async {
+                      final updated = await Navigator.pushNamed(
+                        context,
+                        PaymentSimulationScreen.routeName,
+                        arguments: PaymentSimulationArgs(reservation: _r),
+                      );
+                      if (updated is ReservationModel && mounted) {
+                        setState(() => _r = _mergeReservation(updated));
+                      }
+                    },
+              icon: const Icon(Icons.account_balance_wallet_rounded),
+              label: Text('Payer ${(_r.montantTotal ?? 0).toStringAsFixed(0)} FCFA (simulation)'),
+            ),
+          ] else ...[
+            Text('Statut : ${_r.statutPaiementLabel}', style: theme.textTheme.bodyLarge),
+          ],
           if (canAvis) ...[
             const SizedBox(height: 24),
             Text('Laisser un avis', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),

@@ -5,7 +5,8 @@ const {
   getMesReservations,
   updateStatut,
   laisserAvis,
-  updateStatutPaiement
+  updateStatutPaiement,
+  simulerPaiement
 } = require('../controllers/reservation.controller');
 const { authMiddleware } = require('../middleware/auth.middleware');
 
@@ -13,6 +14,7 @@ router.post('/', authMiddleware, createReservation);
 router.get('/mes-reservations', authMiddleware, getMesReservations);
 router.patch('/:id/statut', authMiddleware, updateStatut);
 router.patch('/:id/paiement', authMiddleware, updateStatutPaiement);
+router.post('/:id/simuler-paiement', authMiddleware, simulerPaiement);
 router.post('/avis', authMiddleware, laisserAvis);
 
 module.exports = router;

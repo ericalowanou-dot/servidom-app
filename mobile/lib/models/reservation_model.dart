@@ -11,6 +11,8 @@ class ReservationModel {
     this.statut,
     this.montantTotal,
     this.statutPaiement,
+    this.referencePaiement,
+    this.modePaiement,
     this.createdAt,
     this.prestataireNom,
     this.prestatairePrenom,
@@ -35,6 +37,8 @@ class ReservationModel {
   final String? statut;
   final double? montantTotal;
   final String? statutPaiement;
+  final String? referencePaiement;
+  final String? modePaiement;
   final DateTime? createdAt;
 
   final String? prestataireNom;
@@ -83,6 +87,21 @@ class ReservationModel {
     }
   }
 
+  String get modePaiementLabel {
+    switch (modePaiement) {
+      case 'flooz':
+        return 'Flooz';
+      case 'tmoney':
+        return 'T-Money';
+      case 'mix':
+        return 'Mix by YAS';
+      default:
+        return modePaiement ?? '';
+    }
+  }
+
+  bool get estPaye => statutPaiement == 'paye';
+
   String? get telephoneContact => prestataireTel ?? clientTel;
 
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
@@ -99,6 +118,8 @@ class ReservationModel {
       statut: json['statut']?.toString(),
       montantTotal: _asDouble(json['montant_total']),
       statutPaiement: json['statut_paiement']?.toString(),
+      referencePaiement: json['reference_paiement']?.toString(),
+      modePaiement: json['mode_paiement']?.toString(),
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
       prestataireNom: json['prestataire_nom']?.toString(),
       prestatairePrenom: json['prestataire_prenom']?.toString(),

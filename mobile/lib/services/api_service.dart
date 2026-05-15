@@ -263,10 +263,17 @@ class ApiService {
   }
 
   /// Prestataires — `GET /api/services/prestataires?categorie_id=`.
-  Future<List<PrestataireListItem>> getPrestataires(int categorieId, {String? quartier}) async {
+  Future<List<PrestataireListItem>> getPrestataires(
+    int categorieId, {
+    String? quartier,
+    bool verifieOnly = false,
+  }) async {
     final q = <String, String>{'categorie_id': '$categorieId'};
     if (quartier != null && quartier.trim().isNotEmpty) {
       q['quartier'] = quartier.trim();
+    }
+    if (verifieOnly) {
+      q['verifie_only'] = 'true';
     }
     final uri = Uri.parse('${ApiService.baseUrl}/services/prestataires').replace(queryParameters: q);
     final res = await _safeRequest(() => http.get(uri, headers: _headers()));
@@ -344,6 +351,24 @@ class ApiService {
     _throwIfError(res);
     final map = jsonDecode(res.body) as Map<String, dynamic>;
     return ReservationModel.fromJson(map['reservation'] as Map<String, dynamic>);
+  }
+
+  /// Simulation paiement Mobile Money — `POST /api/reservations/:id/simuler-paiement`.
+  Future<PaymentSimulationResult> simulerPaiement({
+    required int reservationId,
+    required String modePaiement,
+    required String telephone,
+  }) async {
+    final res = await _safeRequest(
+      () => http.post(
+        Uri.parse('${ApiService.baseUrl}/reservations/$reservationId/simuler-paiement'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({'mode_paiement': modePaiement, 'telephone': telephone}),
+      ),
+    );
+    _throwIfError(res);
+    final map = jsonDecode(res.body) as Map<String, dynamic>;
+    return PaymentSimulationResult.fromJson(map);
   }
 
   /// Mise à jour paiement — `PATCH /api/reservations/:id/paiement`.
@@ -580,6 +605,32 @@ class PrestataireDetailResponse {
   final UserModel prestataire;
   final List<ServiceModel> services;
   final List<AvisItem> avis;
+}
+
+class PaymentSimulationResult {
+  const PaymentSimulationResult({
+    required this.referencePaiement,
+    required this.modePaiement,
+    required this.reservation,
+    this.montant,
+    this.telephone,
+  });
+
+  final String referencePaiement;
+  final String modePaiement;
+  final ReservationModel reservation;
+  final double? montant;
+  final String? telephone;
+
+  factory PaymentSimulationResult.fromJson(Map<String, dynamic> json) {
+    return PaymentSimulationResult(
+      referencePaiement: json['reference_paiement']?.toString() ?? '',
+      modePaiement: json['mode_paiement']?.toString() ?? '',
+      montant: (json['montant'] as num?)?.toDouble(),
+      telephone: json['telephone']?.toString(),
+      reservation: ReservationModel.fromJson(json['reservation'] as Map<String, dynamic>),
+    );
+  }
 }
 
 class AdminStats {

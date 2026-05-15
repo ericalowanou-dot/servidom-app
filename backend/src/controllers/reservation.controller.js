@@ -174,4 +174,77 @@ const updateStatutPaiement = async (req, res) => {
   }
 };
 
-module.exports = { createReservation, getMesReservations, updateStatut, laisserAvis, updateStatutPaiement };
+const ensurePaiementColumns = async () => {
+  await pool.query(`ALTER TABLE reservations ADD COLUMN IF NOT EXISTS reference_paiement VARCHAR(80)`);
+  await pool.query(`ALTER TABLE reservations ADD COLUMN IF NOT EXISTS mode_paiement VARCHAR(40)`);
+};
+
+// Simulation paiement Mobile Money (client uniquement)
+const simulerPaiement = async (req, res) => {
+  if (req.user.role !== 'client') {
+    return res.status(403).json({ message: 'Seul le client peut effectuer un paiement.' });
+  }
+  const { id } = req.params;
+  const { mode_paiement, telephone } = req.body;
+  const modesValides = ['flooz', 'tmoney', 'mix'];
+  const mode = (mode_paiement || 'flooz').toLowerCase();
+  if (!modesValides.includes(mode)) {
+    return res.status(400).json({ message: 'Mode invalide. Choisir : flooz, tmoney ou mix.' });
+  }
+  if (!telephone || String(telephone).trim().length < 8) {
+    return res.status(400).json({ message: 'Numéro Mobile Money requis.' });
+  }
+
+  try {
+    await ensurePaiementColumns();
+    const resa = await pool.query(
+      `SELECT * FROM reservations WHERE id = $1 AND client_id = $2`,
+      [id, req.user.id]
+    );
+    if (resa.rows.length === 0) {
+      return res.status(404).json({ message: 'Réservation non trouvée.' });
+    }
+    const row = resa.rows[0];
+    if (row.statut === 'annule') {
+      return res.status(400).json({ message: 'Impossible de payer une réservation annulée.' });
+    }
+    if (row.statut_paiement === 'paye') {
+      return res.status(400).json({ message: 'Cette réservation est déjà payée.' });
+    }
+
+    const ref = `SIM-${mode.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const tel = String(telephone).trim();
+
+    const result = await pool.query(
+      `UPDATE reservations SET
+         statut_paiement = 'paye',
+         mode_paiement = $1,
+         reference_paiement = $2,
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3 RETURNING *`,
+      [mode, ref, id]
+    );
+
+    res.json({
+      message: 'Paiement simulé avec succès.',
+      simulation: true,
+      reference_paiement: ref,
+      mode_paiement: mode,
+      telephone: tel,
+      montant: row.montant_total,
+      reservation: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Erreur simulerPaiement:', err.message);
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+module.exports = {
+  createReservation,
+  getMesReservations,
+  updateStatut,
+  laisserAvis,
+  updateStatutPaiement,
+  simulerPaiement
+};

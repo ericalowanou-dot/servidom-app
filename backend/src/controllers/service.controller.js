@@ -42,7 +42,8 @@ const getCategories = async (req, res) => {
 
 // Prestataires disponibles (avec filtre par catégorie et localisation)
 const getPrestataires = async (req, res) => {
-  const { categorie_id, quartier } = req.query;
+  const { categorie_id, quartier, verifie_only } = req.query;
+  const onlyVerified = verifie_only === 'true' || verifie_only === '1';
 
   try {
     let query = `
@@ -67,8 +68,11 @@ const getPrestataires = async (req, res) => {
       params.push(`%${quartier}%`);
       query += ` AND u.quartier ILIKE $${params.length}`;
     }
+    if (onlyVerified) {
+      query += ' AND u.est_verifie = TRUE';
+    }
 
-    query += ' ORDER BY u.note_moyenne DESC';
+    query += ' ORDER BY u.est_verifie DESC, u.note_moyenne DESC';
 
     const result = await pool.query(query, params);
     res.json(result.rows);
