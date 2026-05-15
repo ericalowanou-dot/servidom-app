@@ -9,6 +9,7 @@ import '../admin/admin_screen.dart';
 import '../auth/login_screen.dart';
 import '../prestataire/add_service_screen.dart';
 import '../prestataire/my_services_screen.dart';
+import '../messages/conversations_screen.dart';
 import '../reservation/reservation_detail_screen.dart';
 import 'edit_profile_screen.dart';
 
@@ -186,6 +187,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () => Navigator.pushNamed(context, AdminScreen.routeName),
                 icon: const Icon(Icons.admin_panel_settings_rounded),
                 label: const Text('Tableau de bord admin'),
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (u.role == 'client' || u.role == 'prestataire') ...[
+              FilledButton.icon(
+                onPressed: () => Navigator.pushNamed(context, ConversationsScreen.routeName),
+                icon: const Icon(Icons.forum_outlined),
+                label: const Text('Mes messages'),
               ),
               const SizedBox(height: 20),
             ],

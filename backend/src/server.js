@@ -7,6 +7,7 @@ const userRoutes = require('./routes/user.routes');
 const serviceRoutes = require('./routes/service.routes');
 const reservationRoutes = require('./routes/reservation.routes');
 const adminRoutes = require('./routes/admin.routes');
+const messageRoutes = require('./routes/message.routes');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Route de test
 app.get('/', (req, res) => {

@@ -6,6 +6,7 @@ import '../../constants/app_colors.dart';
 import '../../models/reservation_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../messages/chat_screen.dart';
 
 class ReservationDetailArgs {
   const ReservationDetailArgs({required this.reservation});
@@ -192,9 +193,27 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
               ),
             ),
           ),
-          if (tel != null && tel.isNotEmpty) ...[
+          if (_r.statut != 'annule') ...[
             const SizedBox(height: 12),
             FilledButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  ChatScreen.routeName,
+                  arguments: ChatArgs(
+                    reservationId: _r.id,
+                    titre: _r.serviceTitre ?? 'Messages',
+                    autrePartie: _r.autrePartieNom,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              label: const Text('Envoyer un message'),
+            ),
+          ],
+          if (tel != null && tel.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
               onPressed: () => _call(tel),
               icon: const Icon(Icons.phone_rounded),
               label: Text('Appeler $tel'),

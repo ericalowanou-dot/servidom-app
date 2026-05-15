@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/message_model.dart';
 import '../models/reservation_model.dart';
 import '../models/service_model.dart';
 import '../models/user_model.dart';
@@ -355,6 +356,43 @@ class ApiService {
       ),
     );
     _throwIfError(res);
+  }
+
+  /// Conversations — `GET /api/messages/conversations`.
+  Future<List<ConversationModel>> getMesConversations() async {
+    final res = await _safeRequest(
+      () => http.get(Uri.parse('${ApiService.baseUrl}/messages/conversations'), headers: _headers()),
+    );
+    _throwIfError(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => ConversationModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// Messages d'une réservation — `GET /api/messages/reservation/:id`.
+  Future<List<MessageModel>> getMessages(int reservationId) async {
+    final res = await _safeRequest(
+      () => http.get(
+        Uri.parse('${ApiService.baseUrl}/messages/reservation/$reservationId'),
+        headers: _headers(),
+      ),
+    );
+    _throwIfError(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => MessageModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// Envoyer un message — `POST /api/messages`.
+  Future<MessageModel> sendMessage({required int reservationId, required String contenu}) async {
+    final res = await _safeRequest(
+      () => http.post(
+        Uri.parse('${ApiService.baseUrl}/messages'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({'reservation_id': reservationId, 'contenu': contenu}),
+      ),
+    );
+    _throwIfError(res);
+    final map = jsonDecode(res.body) as Map<String, dynamic>;
+    return MessageModel.fromJson(map['data'] as Map<String, dynamic>);
   }
 
   Future<List<ReservationModel>> getMesReservations() async {

@@ -15,6 +15,8 @@ import 'screens/prestataire/edit_service_screen.dart';
 import 'screens/prestataire/my_services_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/messages/chat_screen.dart';
+import 'screens/messages/conversations_screen.dart';
 import 'screens/reservation/reservation_detail_screen.dart';
 import 'screens/reservation/reservation_screen.dart';
 import 'models/service_model.dart';
@@ -121,9 +123,20 @@ class ServiDomApp extends StatelessWidget {
         EditProfileScreen.routeName: (_) => const EditProfileScreen(),
         MyServicesScreen.routeName: (_) => const MyServicesScreen(),
         AdminScreen.routeName: (_) => const AdminScreen(),
+        ConversationsScreen.routeName: (_) => const ConversationsScreen(),
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {
+          case ChatScreen.routeName:
+            final args = settings.arguments as ChatArgs;
+            return MaterialPageRoute<void>(
+              builder: (_) => ChatScreen(
+                reservationId: args.reservationId,
+                titre: args.titre,
+                autrePartie: args.autrePartie,
+              ),
+              settings: settings,
+            );
           case ReservationDetailScreen.routeName:
             final args = settings.arguments as ReservationDetailArgs;
             return MaterialPageRoute<void>(

@@ -115,6 +115,18 @@ const createTables = async () => {
     `);
     console.log('✅ Table avis créée');
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        reservation_id INTEGER NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
+        sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        contenu TEXT NOT NULL,
+        lu BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✅ Table messages créée');
+
     console.log('\n🎉 Base de données ServiDom initialisée avec succès !');
     process.exit(0);
   } catch (err) {
