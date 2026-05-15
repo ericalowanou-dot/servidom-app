@@ -49,7 +49,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         quartier: _quartier.text.trim().isEmpty ? null : _quartier.text.trim(),
       );
       if (!mounted) return;
-      final route = auth.user?.role == 'prestataire' ? ProfileScreen.routeName : '/home';
+      final role = auth.user?.role;
+      final route = role == 'prestataire' ? ProfileScreen.routeName : '/home';
       Navigator.of(context).pushNamedAndRemoveUntil(route, (r) => false);
     } catch (e) {
       if (!mounted) return;
@@ -66,11 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Créer un compte'),
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-      ),
+      appBar: AppBar(title: const Text('Créer un compte')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),

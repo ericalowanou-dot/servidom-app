@@ -12,6 +12,8 @@ class UserModel {
     this.photoUrl,
     this.nombreAvis,
     this.estVerifie,
+    this.latitude,
+    this.longitude,
   });
 
   final int id;
@@ -26,6 +28,8 @@ class UserModel {
   final String? photoUrl;
   final int? nombreAvis;
   final bool? estVerifie;
+  final double? latitude;
+  final double? longitude;
 
   String get nomComplet => '$prenom $nom'.trim();
 
@@ -43,6 +47,8 @@ class UserModel {
       photoUrl: json['photo_url']?.toString(),
       nombreAvis: _asIntNullable(json['nombre_avis']),
       estVerifie: json['est_verifie'] as bool?,
+      latitude: _asDouble(json['latitude']),
+      longitude: _asDouble(json['longitude']),
     );
   }
 
@@ -59,6 +65,8 @@ class UserModel {
         'photo_url': photoUrl,
         'nombre_avis': nombreAvis,
         'est_verifie': estVerifie,
+        'latitude': latitude,
+        'longitude': longitude,
       };
 
   static int _asInt(dynamic v) {

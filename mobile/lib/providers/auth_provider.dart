@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
@@ -99,6 +100,38 @@ class AuthProvider extends ChangeNotifier {
         quartier: quartier,
       );
       _user = r.user;
+      await _persistUser(_user);
+    } on ApiException catch (e) {
+      _error = e.message;
+      rethrow;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateProfile({
+    String? nom,
+    String? prenom,
+    String? email,
+    String? quartier,
+    double? latitude,
+    double? longitude,
+    XFile? photoFile,
+  }) async {
+    _error = null;
+    _loading = true;
+    notifyListeners();
+    try {
+      _user = await _api.updateProfile(
+        nom: nom,
+        prenom: prenom,
+        email: email,
+        quartier: quartier,
+        latitude: latitude,
+        longitude: longitude,
+        photoFile: photoFile,
+      );
       await _persistUser(_user);
     } on ApiException catch (e) {
       _error = e.message;

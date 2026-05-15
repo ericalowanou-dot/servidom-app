@@ -71,6 +71,20 @@ class ReservationModel {
     }
   }
 
+  String get statutPaiementLabel {
+    switch (statutPaiement) {
+      case 'paye':
+        return 'Payé';
+      case 'rembourse':
+        return 'Remboursé';
+      case 'non_paye':
+      default:
+        return 'Non payé';
+    }
+  }
+
+  String? get telephoneContact => prestataireTel ?? clientTel;
+
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
     return ReservationModel(
       id: _asInt(json['id']),

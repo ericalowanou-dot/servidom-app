@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../../constants/app_colors.dart';
@@ -50,6 +51,37 @@ class _ReservationScreenState extends State<ReservationScreen> {
   TimeOfDay? _time;
   double _duree = 2;
   bool _submitting = false;
+  bool _locating = false;
+
+  Future<void> _useGpsForAddress() async {
+    setState(() => _locating = true);
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Autorisez la localisation pour utiliser le GPS.')),
+        );
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      _adresse.text = 'GPS: ${pos.latitude.toStringAsFixed(5)}, ${pos.longitude.toStringAsFixed(5)}';
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Coordonnées GPS ajoutées à l’adresse. Complétez si besoin.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible d’obtenir la position.')),
+      );
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -200,6 +232,14 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   prefixIcon: Icon(Icons.home_work_outlined),
                 ),
                 validator: (v) => (v == null || v.trim().length < 5) ? 'Adresse plus précise requise' : null,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _locating || _submitting ? null : _useGpsForAddress,
+                icon: _locating
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.my_location_rounded),
+                label: const Text('Ajouter ma position GPS'),
               ),
               const SizedBox(height: 12),
               TextFormField(

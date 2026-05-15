@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,9 +8,16 @@ import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'screens/admin/admin_screen.dart';
 import 'screens/prestataire/add_service_screen.dart';
+import 'screens/prestataire/edit_service_screen.dart';
+import 'screens/prestataire/my_services_screen.dart';
+import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/reservation/reservation_detail_screen.dart';
 import 'screens/reservation/reservation_screen.dart';
+import 'models/service_model.dart';
 import 'screens/services/prestataire_detail_screen.dart';
 import 'screens/services/prestataires_screen.dart';
 import 'services/api_service.dart';
@@ -53,15 +61,20 @@ class ServiDomApp extends StatelessWidget {
         colorScheme: colorScheme,
         scaffoldBackgroundColor: AppColors.background,
         appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textPrimary,
+          backgroundColor: AppColors.appBarBackground,
+          foregroundColor: AppColors.onAppBar,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
-          scrolledUnderElevation: 0.5,
+          scrolledUnderElevation: 0,
+          shadowColor: Colors.black26,
           centerTitle: false,
+          iconTheme: const IconThemeData(color: AppColors.onAppBar),
+          actionsIconTheme: const IconThemeData(color: AppColors.onAppBar),
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           titleTextStyle: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: AppColors.onAppBar,
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
@@ -98,16 +111,31 @@ class ServiDomApp extends StatelessWidget {
           }),
         ),
       ),
-      initialRoute: HomeScreen.routeName,
+      home: const AppGate(),
       routes: {
         HomeScreen.routeName: (_) => const HomeScreen(),
         LoginScreen.routeName: (_) => const LoginScreen(),
         RegisterScreen.routeName: (_) => const RegisterScreen(),
         ProfileScreen.routeName: (_) => const ProfileScreen(),
         AddServiceScreen.routeName: (_) => const AddServiceScreen(),
+        EditProfileScreen.routeName: (_) => const EditProfileScreen(),
+        MyServicesScreen.routeName: (_) => const MyServicesScreen(),
+        AdminScreen.routeName: (_) => const AdminScreen(),
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {
+          case ReservationDetailScreen.routeName:
+            final args = settings.arguments as ReservationDetailArgs;
+            return MaterialPageRoute<void>(
+              builder: (_) => ReservationDetailScreen(reservation: args.reservation),
+              settings: settings,
+            );
+          case EditServiceScreen.routeName:
+            final service = settings.arguments as ServiceModel;
+            return MaterialPageRoute<void>(
+              builder: (_) => EditServiceScreen(service: service),
+              settings: settings,
+            );
           case PrestatairesScreen.routeName:
             final args = settings.arguments as PrestatairesArgs;
             return MaterialPageRoute<void>(
@@ -142,5 +170,19 @@ class ServiDomApp extends StatelessWidget {
         return null;
       },
     );
+  }
+}
+
+/// Première vue : accueil marketing si invité, sinon accès direct aux services.
+class AppGate extends StatelessWidget {
+  const AppGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    if (auth.isAuthenticated) {
+      return const HomeScreen();
+    }
+    return const WelcomeScreen();
   }
 }

@@ -58,7 +58,7 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> {
                     padding: const EdgeInsets.only(left: 16, bottom: 8),
                     child: Text(
                       'Quartier : ${widget.quartierFilter}',
-                      style: theme.textTheme.bodySmall,
+                      style: theme.textTheme.bodySmall?.copyWith(color: AppColors.onAppBarMuted),
                     ),
                   ),
                 ),
@@ -180,7 +180,7 @@ class _PrestataireCard extends StatelessWidget {
                         )
                       : hasPhoto
                           ? Image.network(
-                              item.photoUrl!,
+                              ApiService.resolveMediaUrl(item.photoUrl),
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) => _placeholder(icon: fallbackIcon),
                             )

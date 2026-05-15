@@ -138,4 +138,94 @@ const createService = async (req, res) => {
   }
 };
 
-module.exports = { getCategories, getPrestataires, getPrestataire, createService, uploadServiceImage };
+// Mes services (prestataire connecté)
+const getMesServices = async (req, res) => {
+  if (req.user.role !== 'prestataire') {
+    return res.status(403).json({ message: 'Réservé aux prestataires.' });
+  }
+  try {
+    const result = await pool.query(
+      `SELECT s.*, c.nom as categorie_nom, c.icone as categorie_icone
+       FROM services s
+       JOIN categories c ON c.id = s.categorie_id
+       WHERE s.prestataire_id = $1
+       ORDER BY s.created_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+// Modifier un service
+const updateService = async (req, res) => {
+  if (req.user.role !== 'prestataire') {
+    return res.status(403).json({ message: 'Réservé aux prestataires.' });
+  }
+  const { id } = req.params;
+  const { categorie_id, titre, description, tarif_horaire, disponible } = req.body;
+  const disponibleParsed = disponible !== undefined && disponible !== ''
+    ? (disponible === true || disponible === 'true')
+    : undefined;
+  const tarifParsed = tarif_horaire !== undefined && tarif_horaire !== ''
+    ? parseFloat(tarif_horaire)
+    : undefined;
+  const catId = categorie_id ? parseInt(categorie_id, 10) : undefined;
+  try {
+    await pool.query('ALTER TABLE services ADD COLUMN IF NOT EXISTS image_url VARCHAR(255)');
+    const existing = await pool.query(
+      'SELECT * FROM services WHERE id = $1 AND prestataire_id = $2',
+      [id, req.user.id]
+    );
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ message: 'Service non trouvé.' });
+    }
+    const imageUrl = req.file ? `/uploads/services/${req.file.filename}` : existing.rows[0].image_url;
+    const result = await pool.query(
+      `UPDATE services SET
+         categorie_id = COALESCE($1, categorie_id),
+         titre = COALESCE(NULLIF($2, ''), titre),
+         description = COALESCE($3, description),
+         tarif_horaire = COALESCE($4, tarif_horaire),
+         disponible = COALESCE($5, disponible),
+         image_url = COALESCE($6, image_url)
+       WHERE id = $7 AND prestataire_id = $8 RETURNING *`,
+      [catId, titre, description || null, tarifParsed, disponibleParsed, imageUrl, id, req.user.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+// Supprimer un service
+const deleteService = async (req, res) => {
+  if (req.user.role !== 'prestataire') {
+    return res.status(403).json({ message: 'Réservé aux prestataires.' });
+  }
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM services WHERE id = $1 AND prestataire_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Service non trouvé.' });
+    }
+    res.json({ message: 'Service supprimé.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+module.exports = {
+  getCategories,
+  getPrestataires,
+  getPrestataire,
+  createService,
+  uploadServiceImage,
+  getMesServices,
+  updateService,
+  deleteService
+};

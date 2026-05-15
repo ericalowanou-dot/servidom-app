@@ -126,25 +126,36 @@ class _PrestataireDetailScreenState extends State<PrestataireDetailScreen> {
               SliverAppBar(
                 expandedHeight: 220,
                 pinned: true,
+                backgroundColor: AppColors.appBarBackground,
+                foregroundColor: AppColors.onAppBar,
+                surfaceTintColor: Colors.transparent,
+                iconTheme: const IconThemeData(color: AppColors.onAppBar),
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text('${p.prenom} ${p.nom}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                  title: Text(
+                    '${p.prenom} ${p.nom}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.onAppBar, shadows: [
+                      Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 1)),
+                    ]),
+                  ),
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
                       if (hasPhoto)
                         Image.network(
-                          p.photoUrl!,
+                          ApiService.resolveMediaUrl(p.photoUrl),
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              Container(color: AppColors.primary.withValues(alpha: 0.2)),
+                              Container(color: AppColors.appBarBackground.withValues(alpha: 0.35)),
                         )
                       else
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.primary,
-                                AppColors.primary.withValues(alpha: 0.75),
+                                AppColors.appBarBackground,
+                                AppColors.appBarBackground.withValues(alpha: 0.78),
                               ],
                             ),
                           ),

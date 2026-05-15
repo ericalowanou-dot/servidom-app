@@ -151,4 +151,27 @@ const laisserAvis = async (req, res) => {
   }
 };
 
-module.exports = { createReservation, getMesReservations, updateStatut, laisserAvis };
+// Mettre à jour le statut de paiement
+const updateStatutPaiement = async (req, res) => {
+  const { id } = req.params;
+  const { statut_paiement } = req.body;
+  const statutsValides = ['non_paye', 'paye', 'rembourse'];
+  if (!statutsValides.includes(statut_paiement)) {
+    return res.status(400).json({ message: 'Statut de paiement invalide.' });
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE reservations SET statut_paiement = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND (client_id = $3 OR prestataire_id = $3) RETURNING *`,
+      [statut_paiement, id, req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Réservation non trouvée.' });
+    }
+    res.json({ message: 'Paiement mis à jour.', reservation: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+module.exports = { createReservation, getMesReservations, updateStatut, laisserAvis, updateStatutPaiement };

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../admin/admin_screen.dart';
 import '../profile/profile_screen.dart';
 import 'register_screen.dart';
 
@@ -36,7 +37,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await auth.login(_tel.text.trim(), _pass.text);
       if (!mounted) return;
-      final route = auth.user?.role == 'prestataire' ? ProfileScreen.routeName : '/home';
+      final role = auth.user?.role;
+      final route = role == 'admin'
+          ? AdminScreen.routeName
+          : role == 'prestataire'
+              ? ProfileScreen.routeName
+              : '/home';
       Navigator.of(context).pushNamedAndRemoveUntil(route, (r) => false);
     } catch (e) {
       if (!mounted) return;

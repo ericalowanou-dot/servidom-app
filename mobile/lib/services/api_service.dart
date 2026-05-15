@@ -179,6 +179,57 @@ class ApiService {
     return UserModel.fromJson(map);
   }
 
+  /// Mise à jour profil — `PUT /api/users/profil`.
+  Future<UserModel> updateProfile({
+    String? nom,
+    String? prenom,
+    String? email,
+    String? quartier,
+    double? latitude,
+    double? longitude,
+    XFile? photoFile,
+  }) async {
+    if (photoFile != null) {
+      final req = http.MultipartRequest('PUT', Uri.parse('${ApiService.baseUrl}/users/profil'));
+      req.headers.addAll(_headers());
+      if (nom != null) req.fields['nom'] = nom;
+      if (prenom != null) req.fields['prenom'] = prenom;
+      if (email != null) req.fields['email'] = email;
+      if (quartier != null) req.fields['quartier'] = quartier;
+      if (latitude != null) req.fields['latitude'] = '$latitude';
+      if (longitude != null) req.fields['longitude'] = '$longitude';
+      final mimeType = _guessMimeType(photoFile.name);
+      final mediaType = MediaType.parse(mimeType);
+      if (kIsWeb) {
+        final bytes = await photoFile.readAsBytes();
+        req.files.add(http.MultipartFile.fromBytes('photo', bytes, filename: photoFile.name, contentType: mediaType));
+      } else {
+        req.files.add(await http.MultipartFile.fromPath('photo', photoFile.path, filename: photoFile.name, contentType: mediaType));
+      }
+      final res = await _safeMultipart(req);
+      _throwIfError(res);
+      final map = jsonDecode(res.body) as Map<String, dynamic>;
+      return UserModel.fromJson(map['user'] as Map<String, dynamic>);
+    }
+    final res = await _safeRequest(
+      () => http.put(
+        Uri.parse('${ApiService.baseUrl}/users/profil'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({
+          if (nom != null) 'nom': nom,
+          if (prenom != null) 'prenom': prenom,
+          if (email != null) 'email': email,
+          if (quartier != null) 'quartier': quartier,
+          if (latitude != null) 'latitude': latitude,
+          if (longitude != null) 'longitude': longitude,
+        }),
+      ),
+    );
+    _throwIfError(res);
+    final map = jsonDecode(res.body) as Map<String, dynamic>;
+    return UserModel.fromJson(map['user'] as Map<String, dynamic>);
+  }
+
   /// Catégories — `GET /api/services/categories`.
   Future<List<CategoryModel>> getCategories() async {
     final res = await _safeRequest(
@@ -262,6 +313,50 @@ class ApiService {
   }
 
   /// Historique — `GET /api/reservations/mes-reservations`.
+  /// Mise à jour statut — `PATCH /api/reservations/:id/statut`.
+  Future<ReservationModel> updateReservationStatut({required int id, required String statut}) async {
+    final res = await _safeRequest(
+      () => http.patch(
+        Uri.parse('${ApiService.baseUrl}/reservations/$id/statut'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({'statut': statut}),
+      ),
+    );
+    _throwIfError(res);
+    final map = jsonDecode(res.body) as Map<String, dynamic>;
+    return ReservationModel.fromJson(map['reservation'] as Map<String, dynamic>);
+  }
+
+  /// Mise à jour paiement — `PATCH /api/reservations/:id/paiement`.
+  Future<ReservationModel> updateReservationPaiement({required int id, required String statutPaiement}) async {
+    final res = await _safeRequest(
+      () => http.patch(
+        Uri.parse('${ApiService.baseUrl}/reservations/$id/paiement'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({'statut_paiement': statutPaiement}),
+      ),
+    );
+    _throwIfError(res);
+    final map = jsonDecode(res.body) as Map<String, dynamic>;
+    return ReservationModel.fromJson(map['reservation'] as Map<String, dynamic>);
+  }
+
+  /// Avis — `POST /api/reservations/avis`.
+  Future<void> laisserAvis({required int reservationId, required int note, String? commentaire}) async {
+    final res = await _safeRequest(
+      () => http.post(
+        Uri.parse('${ApiService.baseUrl}/reservations/avis'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({
+          'reservation_id': reservationId,
+          'note': note,
+          if (commentaire != null && commentaire.isNotEmpty) 'commentaire': commentaire,
+        }),
+      ),
+    );
+    _throwIfError(res);
+  }
+
   Future<List<ReservationModel>> getMesReservations() async {
     final res = await _safeRequest(
       () => http.get(
@@ -328,6 +423,83 @@ class ApiService {
     }
   }
 
+  /// Mes services (prestataire) — `GET /api/services/mes-services`.
+  Future<List<ServiceModel>> getMesServices() async {
+    final res = await _safeRequest(
+      () => http.get(Uri.parse('${ApiService.baseUrl}/services/mes-services'), headers: _headers()),
+    );
+    _throwIfError(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => ServiceModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<ServiceModel> updateService({
+    required int id,
+    int? categorieId,
+    String? titre,
+    String? description,
+    double? tarifHoraire,
+    bool? disponible,
+    XFile? imageFile,
+  }) async {
+    final req = http.MultipartRequest('PUT', Uri.parse('${ApiService.baseUrl}/services/$id'));
+    req.headers.addAll(_headers());
+    if (categorieId != null) req.fields['categorie_id'] = '$categorieId';
+    if (titre != null) req.fields['titre'] = titre;
+    if (description != null) req.fields['description'] = description;
+    if (tarifHoraire != null) req.fields['tarif_horaire'] = '$tarifHoraire';
+    if (disponible != null) req.fields['disponible'] = disponible ? 'true' : 'false';
+    if (imageFile != null) {
+      final mimeType = _guessMimeType(imageFile.name);
+      final mediaType = MediaType.parse(mimeType);
+      if (kIsWeb) {
+        final bytes = await imageFile.readAsBytes();
+        req.files.add(http.MultipartFile.fromBytes('image', bytes, filename: imageFile.name, contentType: mediaType));
+      } else {
+        req.files.add(await http.MultipartFile.fromPath('image', imageFile.path, filename: imageFile.name, contentType: mediaType));
+      }
+    }
+    final res = await _safeMultipart(req);
+    _throwIfError(res);
+    return ServiceModel.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<void> deleteService(int id) async {
+    final res = await _safeRequest(
+      () => http.delete(Uri.parse('${ApiService.baseUrl}/services/$id'), headers: _headers()),
+    );
+    _throwIfError(res);
+  }
+
+  /// Admin — statistiques.
+  Future<AdminStats> getAdminStats() async {
+    final res = await _safeRequest(
+      () => http.get(Uri.parse('${ApiService.baseUrl}/admin/stats'), headers: _headers()),
+    );
+    _throwIfError(res);
+    return AdminStats.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<List<AdminUserRow>> getAdminUsers() async {
+    final res = await _safeRequest(
+      () => http.get(Uri.parse('${ApiService.baseUrl}/admin/utilisateurs'), headers: _headers()),
+    );
+    _throwIfError(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => AdminUserRow.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> setPrestataireVerifie(int userId, bool estVerifie) async {
+    final res = await _safeRequest(
+      () => http.patch(
+        Uri.parse('${ApiService.baseUrl}/admin/utilisateurs/$userId/verifier'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({'est_verifie': estVerifie}),
+      ),
+    );
+    _throwIfError(res);
+  }
+
   String _guessMimeType(String filename) {
     final n = filename.toLowerCase();
     if (n.endsWith('.png')) return 'image/png';
@@ -352,6 +524,75 @@ class PrestataireDetailResponse {
   final UserModel prestataire;
   final List<ServiceModel> services;
   final List<AvisItem> avis;
+}
+
+class AdminStats {
+  const AdminStats({
+    required this.utilisateurs,
+    required this.prestataires,
+    required this.clients,
+    required this.services,
+    required this.reservations,
+    required this.avis,
+  });
+  final int utilisateurs;
+  final int prestataires;
+  final int clients;
+  final int services;
+  final int reservations;
+  final int avis;
+
+  factory AdminStats.fromJson(Map<String, dynamic> json) => AdminStats(
+        utilisateurs: _adminInt(json['utilisateurs']),
+        prestataires: _adminInt(json['prestataires']),
+        clients: _adminInt(json['clients']),
+        services: _adminInt(json['services']),
+        reservations: _adminInt(json['reservations']),
+        avis: _adminInt(json['avis']),
+      );
+}
+
+class AdminUserRow {
+  const AdminUserRow({
+    required this.id,
+    required this.nom,
+    required this.prenom,
+    required this.telephone,
+    required this.role,
+    this.quartier,
+    this.estActif,
+    this.estVerifie,
+    this.createdAt,
+  });
+  final int id;
+  final String nom;
+  final String prenom;
+  final String telephone;
+  final String role;
+  final String? quartier;
+  final bool? estActif;
+  final bool? estVerifie;
+  final DateTime? createdAt;
+
+  String get nomComplet => '$prenom $nom'.trim();
+
+  factory AdminUserRow.fromJson(Map<String, dynamic> json) => AdminUserRow(
+        id: _adminInt(json['id']),
+        nom: json['nom']?.toString() ?? '',
+        prenom: json['prenom']?.toString() ?? '',
+        telephone: json['telephone']?.toString() ?? '',
+        role: json['role']?.toString() ?? '',
+        quartier: json['quartier']?.toString(),
+        estActif: json['est_actif'] as bool?,
+        estVerifie: json['est_verifie'] as bool?,
+        createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      );
+}
+
+int _adminInt(dynamic v) {
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v?.toString() ?? '') ?? 0;
 }
 
 class AvisItem {

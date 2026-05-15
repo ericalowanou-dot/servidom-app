@@ -114,7 +114,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, nom, prenom, email, telephone, role, quartier, ville, photo_url, note_moyenne, nombre_avis, est_verifie, created_at FROM users WHERE id = $1',
+      'SELECT id, nom, prenom, email, telephone, role, quartier, ville, photo_url, latitude, longitude, note_moyenne, nombre_avis, est_verifie, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (result.rows.length === 0) {
