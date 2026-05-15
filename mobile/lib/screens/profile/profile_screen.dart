@@ -11,6 +11,7 @@ import '../prestataire/add_service_screen.dart';
 import '../prestataire/my_services_screen.dart';
 import '../messages/conversations_screen.dart';
 import '../reservation/reservation_detail_screen.dart';
+import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -151,6 +152,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pushNamed(context, ChangePasswordScreen.routeName),
+              icon: const Icon(Icons.lock_reset_rounded),
+              label: const Text('Changer le mot de passe'),
             ),
             const SizedBox(height: 20),
             if (u.role == 'prestataire') ...[

@@ -180,6 +180,24 @@ class ApiService {
     return UserModel.fromJson(map);
   }
 
+  /// Changer le mot de passe — `PUT /api/auth/password`.
+  Future<void> changePassword({
+    required String ancienMotDePasse,
+    required String nouveauMotDePasse,
+  }) async {
+    final res = await _safeRequest(
+      () => http.put(
+        Uri.parse('${ApiService.baseUrl}/auth/password'),
+        headers: _headers(jsonBody: true),
+        body: jsonEncode({
+          'ancien_mot_de_passe': ancienMotDePasse,
+          'nouveau_mot_de_passe': nouveauMotDePasse,
+        }),
+      ),
+    );
+    _throwIfError(res);
+  }
+
   /// Mise à jour profil — `PUT /api/users/profil`.
   Future<UserModel> updateProfile({
     String? nom,

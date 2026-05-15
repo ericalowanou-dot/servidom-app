@@ -13,6 +13,7 @@ import 'screens/admin/admin_screen.dart';
 import 'screens/prestataire/add_service_screen.dart';
 import 'screens/prestataire/edit_service_screen.dart';
 import 'screens/prestataire/my_services_screen.dart';
+import 'screens/profile/change_password_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/messages/chat_screen.dart';
@@ -121,6 +122,7 @@ class ServiDomApp extends StatelessWidget {
         ProfileScreen.routeName: (_) => const ProfileScreen(),
         AddServiceScreen.routeName: (_) => const AddServiceScreen(),
         EditProfileScreen.routeName: (_) => const EditProfileScreen(),
+        ChangePasswordScreen.routeName: (_) => const ChangePasswordScreen(),
         MyServicesScreen.routeName: (_) => const MyServicesScreen(),
         AdminScreen.routeName: (_) => const AdminScreen(),
         ConversationsScreen.routeName: (_) => const ConversationsScreen(),

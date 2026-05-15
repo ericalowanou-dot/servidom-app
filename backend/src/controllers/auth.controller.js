@@ -126,4 +126,45 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+// Changer le mot de passe (utilisateur connecté)
+const changePassword = async (req, res) => {
+  const { ancien_mot_de_passe, nouveau_mot_de_passe } = req.body;
+
+  if (!ancien_mot_de_passe || !nouveau_mot_de_passe) {
+    return res.status(400).json({ message: 'Ancien et nouveau mot de passe requis.' });
+  }
+  if (String(nouveau_mot_de_passe).length < 6) {
+    return res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 6 caractères.' });
+  }
+  if (ancien_mot_de_passe === nouveau_mot_de_passe) {
+    return res.status(400).json({ message: 'Le nouveau mot de passe doit être différent de l’ancien.' });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT mot_de_passe FROM users WHERE id = $1 AND est_actif = TRUE',
+      [req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+    }
+
+    const valid = await bcrypt.compare(ancien_mot_de_passe, result.rows[0].mot_de_passe);
+    if (!valid) {
+      return res.status(401).json({ message: 'Ancien mot de passe incorrect.' });
+    }
+
+    const hash = await bcrypt.hash(nouveau_mot_de_passe, 10);
+    await pool.query(
+      'UPDATE users SET mot_de_passe = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [hash, req.user.id]
+    );
+
+    res.json({ message: 'Mot de passe modifié avec succès.' });
+  } catch (err) {
+    console.error('Erreur changePassword:', err.message);
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+module.exports = { register, login, getMe, changePassword };
